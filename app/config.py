@@ -11,6 +11,8 @@ class BaseConfig(object):
     # if PROJECT_NAME is set manually, ensure dir name is changed to the same name
     PROJECT_NAME = os.path.split(os.path.dirname(os.path.realpath(__file__)))[1]
 
+    SECRET_KEY = 'WHATWHATINTHEBUTT'
+
 
 class DefaultConfig(BaseConfig):
     DEBUG = True

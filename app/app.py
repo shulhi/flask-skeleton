@@ -1,7 +1,7 @@
 from flask import Flask, render_template
 
 from .config import BaseConfig, DefaultConfig
-from .extension import db, login_manager
+from .extensions import db, login_manager
 
 from .module_one import module_one
 
@@ -72,6 +72,6 @@ def configure_extensions(app):
 
 
 def configure_error_handlers(app):
-    @app.errohandler(404):
+    @app.errorhandler(404)
     def page_not_found(error):
         return render_template("page_not_found.html"), 404
