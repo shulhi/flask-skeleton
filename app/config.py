@@ -20,6 +20,10 @@ class DefaultConfig(BaseConfig):
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_DATABASE_URI = "postgresql://username:password@host/database"
 
+    CELERY_BROKER_URL = 'amqp://127.0.0.1'
+    CELERY_RESULT_BACKEND = 'rpc'
+    CELERY_TRACK_STARTED = True
+
 
 class TestConfig(BaseConfig):
     TESTING = True

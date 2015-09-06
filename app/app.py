@@ -1,36 +1,48 @@
 from flask import Flask, render_template
+from celery import Celery
 
 from .config import BaseConfig, DefaultConfig
 from .extensions import db, login_manager
-
-from .module_one import module_one
 
 
 __all__ = ['create_app']
 
 
-DEFAULT_BLUEPRINTS = {
-    '/one': module_one
-}
-
-
-def create_app(config=None, app_name=None, blueprints=None):
+def create_app(config=None, app_name=None, register_blueprints=True):
     """
     Create Flask app
     """
 
     if app_name is None:
         app_name = BaseConfig.PROJECT_NAME
-    if blueprints is None:
-        blueprints = DEFAULT_BLUEPRINTS
 
     app = Flask(app_name)
     configure_app(app, config)
-    configure_blueprints(app, blueprints)
+
+    # So no circular import when using Celery
+    if register_blueprints:
+        configure_blueprints(app)
+
     configure_extensions(app)
     configure_error_handlers(app)
 
     return app
+
+
+def create_celery(app=None):
+    celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+    celery.conf.update(app.config)
+    TaskBase = celery.Task
+
+    class ContextTask(TaskBase):
+        abstract = True
+
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+
+    celery.Task = ContextTask
+    return celery
 
 
 def configure_app(app, config=None):
@@ -44,10 +56,17 @@ def configure_app(app, config=None):
         app.config.from_object(config)
 
 
-def configure_blueprints(app, blueprints):
+def configure_blueprints(app):
     """
     Register blueprints
     """
+
+    # Break the circular import
+    from .module_one import module_one
+
+    blueprints = {
+        '': module_one
+    }
 
     for url, blueprint in blueprints.iteritems():
         app.register_blueprint(blueprint, url_prefix=url)
